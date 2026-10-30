@@ -1,0 +1,11 @@
+{
+  "rune_detect":
+  {
+    "xml": "Rune-v8n-fp16-20260624-D14367-B16/Rune-v8n-fp16-20260624-D14367-B16.xml",
+    "infer_mode": "sync",
+    "deploy_way": "openvino",
+    "postprocess_mode": "auto",
+    "device": "CPU",
+    "score_threshold": 0.5
+  }
+}
