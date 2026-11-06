@@ -16,6 +16,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "buff_algo/type.hpp"
 
 
 namespace fs = std::filesystem;
@@ -134,26 +135,32 @@ void drawRune(cv::Mat &image, const std::vector<NetRuneResult> &results)
 
 //推理能量机关
 std::optional<RuneDetectionFrame> runRune
-                   (const fs::path &root, const fs::path &config_path,
-                    const fs::path &output_dir,
-                    std::size_t pipeline_delay)
+                   (const fs::path &root = fs::path{}, const fs::path &config_path,
+                    const fs::path &output_dir = fs::path{},
+                    std::size_t pipeline_delay,
+                    cv::Mat input_ = {})
 {
     const fs::path models = root / "所有模型/openvino";
     RuneDetector detector(
         JsonConfig{config_path.string(), "rune_detect", models.string()},
         pipeline_delay);
+
+    std::optional<RuneDetectionFrame> last_frame;
+    std::optional<RuneDetectionFrame> output;
+
+    if(input_.empty())
+    { //使用视频测试时
     VideoClip clip = openMiddleClip(root / "测试视频/符.avi");
-    const fs::path output_path = output_dir / "rune_result.mp4";
     cv::VideoWriter writer = createWriter(clip.video, output_path);
+    const fs::path output_path = output_dir / "rune_result.mp4";
 
     std::uint64_t count = 0;
     std::uint64_t submitted = 0;
     cv::Mat input;
-    std::optional<RuneDetectionFrame> last_frame;
     while (submitted < clip.frame_limit && clip.video.read(input))
     {
         ++submitted;
-        std::optional<RuneDetectionFrame> output = detector.process(input);
+        output = detector.process(input);
         if (!output)
             continue;
         last_frame = std::move(output);
@@ -166,6 +173,27 @@ std::optional<RuneDetectionFrame> runRune
     }
     cv::destroyAllWindows();
     return last_frame;
+    };
+
+    else
+    {//真实使用时
+        while(1){
+        cv::VideoWriter writer = createWriter(clip.video, output_path);
+        output = detector.process(input_);
+        if (!output)
+            continue;
+        last_frame = std::move(output);
+        drawRune(last_frame->image, last_frame->results);
+        cv::imshow("img", last_frame->image);
+        if (cv::waitKey(1) == 27)  // ESC 键退出
+            break;
+        
+    
+        cv::destroyAllWindows();
+        return last_frame;
+        };
+    };
+
 }
 
 

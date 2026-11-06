@@ -51,11 +51,11 @@ if(NNDEPLOYMENT_WITH_OPENVINO)
     list(APPEND SOURCE_FILES ${TASKS_DIR}/openvino.cpp)
 endif()
 
-add_executable(buff ${SOURCE_FILES})
+add_executable(main ${SOURCE_FILES})
 
-target_include_directories(buff PRIVATE ${INCLUDE_DIRS})
+target_include_directories(main PRIVATE ${INCLUDE_DIRS})
 
-target_link_libraries(buff PRIVATE
+target_link_libraries(main PRIVATE
     opencv_core
     opencv_imgproc
     opencv_videoio
@@ -65,24 +65,24 @@ target_link_libraries(buff PRIVATE
 )
 
 if(NNDEPLOYMENT_WITH_OPENVINO)
-    target_link_libraries(buff PRIVATE openvino::runtime)
+    target_link_libraries(main PRIVATE openvino::runtime)
 endif()
 
-target_compile_definitions(buff PRIVATE
+target_compile_definitions(main PRIVATE
     NNDEPLOYMENT_WITH_OPENVINO=$<BOOL:${NNDEPLOYMENT_WITH_OPENVINO}>
     NNDEPLOYMENT_WITH_TENSORRT=$<BOOL:${NNDEPLOYMENT_WITH_TENSORRT}>
     PROJECT_ROOT_DIR="${PROJECT_ROOT}"
 )
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    target_compile_options(buff PRIVATE -Wall -Wextra -Wno-unused-parameter)
+    target_compile_options(main PRIVATE -Wall -Wextra -Wno-unused-parameter)
 endif()
 
 file(MAKE_DIRECTORY ${OUTPUT_DIR})
 
-add_custom_command(TARGET buff POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:buff>/configs
+add_custom_command(TARGET main POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:main>/configs
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${PROJECT_ROOT}/configs $<TARGET_FILE_DIR:buff>/configs
+            ${PROJECT_ROOT}/configs $<TARGET_FILE_DIR:main>/configs
     COMMENT "Copying configs to output directory"
 )
