@@ -17,7 +17,7 @@
 #include <string>
 
 #include "buff_algo/type.hpp"
-
+#include "buff_algo/buff_tracker.hpp"
 
 namespace fs = std::filesystem;
 
