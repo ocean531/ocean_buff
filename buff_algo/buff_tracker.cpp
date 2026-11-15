@@ -1,6 +1,6 @@
 #include <cmath>
 
-#include "common/math_utils.hpp"
+#include "math_utils.hpp"
 #include "buff_tracker.hpp"
 
 namespace buff_algo {

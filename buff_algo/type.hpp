@@ -34,7 +34,7 @@ struct BuffDetection {
     Eigen::Vector2f l = Eigen::Vector2f::Zero();
     Eigen::Vector2f b = Eigen::Vector2f::Zero();
     Eigen::Vector2f r = Eigen::Vector2f::Zero();
-}
+};
 
 
 // 能量机关运动状态估计结果（对应主仓库 autoaim_interfaces::msg::BuffState）。

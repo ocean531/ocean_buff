@@ -4,38 +4,76 @@
 int main(int argc, char **argv)
 {
 
-    buff_algo::BuffSelector selector(buff_color); //扇叶选择器
+    const fs::path root = projectRoot(argc, argv);
+
+    cv::FileStorage detector_config(
+            root /"configs/detector/detector.yaml",
+            cv::FileStorage::READ
+        );
+        cv::FileStorage tracker_config(
+            root /"configs/tracker/tracker.yaml",
+            cv::FileStorage::READ
+        );
+        cv::FileStorage predictor_config(
+            root /"configs/predictor/predictor.yaml",
+            cv::FileStorage::READ
+        );
+        // if (!detector_config.isOpened() || !tracker_config.isOpened() ||
+        //     !predictor_config.isOpened()) {
+        //     throw std::runtime_error("failed to open config yaml in " root);
+        // }
+    
+    const cv::Mat kCameraMatrix = (cv::Mat_<double>(3, 3) << 800.0, 0.0, 640.0,
+                                                               0.0, 800.0, 384.0,
+                                                               0.0, 0.0, 1.0);
+    const cv::Mat kDistortion = cv::Mat::zeros(1, 5, CV_64F);
+
+    buff_algo::BuffSelector selector(0); //扇叶选择器
     selector.set_camera_matrix(kCameraMatrix, kDistortion); //后面改成从yaml中读取
 
     buff_algo::BuffPnPSolver solver; //解算器
     solver.set_camera_matrix(kCameraMatrix, kDistortion);//同上,需要修改
 
     buff_algo::BuffTracker tracker(tracker_config["buff_tracker"]);
-    tracker.set_mode(static_cast<buff_algo::BuffMode>(mode));
+    tracker.set_mode(static_cast<buff_algo::BuffMode>(2)); //通信接口 2大1小符
 
     buff_algo::BuffPredictor predictor(predictor_config["buff_predictor"]);
 
 
-
-
-    const fs::path root = projectRoot(argc, argv);
     const fs::path config = argc > 2
                                 ? fs::absolute(fs::path(argv[2]))
                                 : root / "configs/detect_config.json";
-
     const fs::path output_dir = root / "result";
 
+
+    //声明识别器
+    const fs::path models = root / "所有模型/openvino";
+    RuneDetector detector(
+        JsonConfig{config.string(), "rune_detect", models.string()},0);
+    
+    std::uint64_t submitted = 0;
     cv::Mat frame;
     int processed = 0;
-    bool window_ok = true;
     buff_algo::StatusType last_status = buff_algo::StatusType::LOST;
+    
+    VideoClip clip = openMiddleClip(root / "测试视频/符1.avi");
+    //auto capture = openVideo(root / "测试视频/符.avi");
+    //std::optional<RuneDetectionFrame> rune = runRune(config, 0 , root , output_dir , frame);
 
-    while(1){ //主循环入口
+    while(submitted < clip.frame_limit && clip.video.read(frame))
+    { //主循环入口
 
-    std::optional<RuneDetectionFrame> rune = runRune(root, config, output_dir, 0); //模型处理结果
+    ++submitted;
+    //capture.read(frame);
+    auto rune = run(detector , frame , 1);
 
+    cv::imshow("img" , rune->image);
+    if (cv::waitKey(1) == 27)  // ESC 键退出
+            break;
+
+    
     std::vector<buff_algo::BuffDetection> detections ;//算法需要的类型
-    detections.reserve(100000);
+    detections.reserve(100);
 
     //对齐一下结构体，写的有点不太好
     if(rune){
@@ -48,6 +86,7 @@ int main(int argc, char **argv)
             float score = static_cast<float>(item.score);           //置信度
 
             buff_algo::BuffDetection detected(0 , item.class_id , score , t , l , b , r);
+        //这里浙大的格式需要传入模型识别出的颜色，但是深大的模型没有考虑这个，所以直接传入我方颜色就ok
             detections.emplace_back(detected);
         };
     }; 
@@ -63,22 +102,22 @@ int main(int argc, char **argv)
     };
 
     //tracker更新
-    const double timestamp = capture.get(cv::CAP_PROP_POS_MSEC) / 1000.0;
+    const double timestamp = clip.video.get(cv::CAP_PROP_POS_MSEC) / 1000.0;
     tracker.update(timestamp); //时间戳，需改为同济形式
 
     buff_algo::BuffState state = tracker.get_state(); //拟合结果
 
     predictor.set_state(state, timestamp, timestamp);
-    predictor.predict_position(0.1f);
+    //auto x = predictor.predict_position(0.1f);
 
+    //std::cout<<x<<std::endl;
     //打印调试信息
     if (tracker.status() != last_status || processed % 30 == 0) {
         tracker.print_colored_status_info();
         last_status = tracker.status();
     }
+    ++processed;
 
-
-
-    }
+    };
     return 0;
 }

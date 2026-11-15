@@ -3,12 +3,12 @@
 #include <eigen3/Eigen/Dense>
 #include <opencv2/opencv.hpp>
 
-#include "buff_algo/common/types.hpp"
-#include "buff_algo/common/ema_filter.hpp"
+#include "type.hpp"
+#include "ema_filter.hpp"
 
-#include "buff_algo/tracker/kalman_filter.hpp"
-#include "buff_algo/tracker/ransac_filter.hpp"
-#include "buff_algo/tracker/tracker_status.hpp"
+#include "kalman_filter.hpp"
+#include "ransac_filter.hpp"
+#include "tracker_status.hpp"
 
 namespace buff_algo {
 

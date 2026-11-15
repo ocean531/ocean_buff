@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(buff LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -33,9 +33,19 @@ if(NNDEPLOYMENT_WITH_TENSORRT)
     message(WARNING "TensorRT 后端尚未实现，NNDEPLOYMENT_WITH_TENSORRT 暂不生效")
 endif()
 
+find_package(OpenCV REQUIRED)
+find_package(fmt REQUIRED)
+find_package(Eigen3 REQUIRED)
+
+include_directories(${EIGEN3_INCLUDE_DIR})
+include_directories(${OpenCV_INCLUDE_DIRS})
+include_directories(${PROJECT_SOURCE_DIR})
+
+
 set(PROJECT_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 set(TASKS_DIR ${PROJECT_ROOT}/tasks)
-set(INCLUDE_DIRS ${PROJECT_ROOT} ${TASKS_DIR})
+set(ALGO_DIR ${PROJECT_ROOT}/buff_algo)
+set(INCLUDE_DIRS ${PROJECT_ROOT} ${TASKS_DIR} ${ALGO_DIR})
 set(OUTPUT_DIR ${PROJECT_ROOT}/result)
 
 set(SOURCE_FILES
@@ -45,6 +55,13 @@ set(SOURCE_FILES
     ${TASKS_DIR}/deployment_lib.cpp
     ${TASKS_DIR}/postprocess.cpp
     ${TASKS_DIR}/performance.cpp
+    ${ALGO_DIR}/buff_predictor.cpp
+    ${ALGO_DIR}/buff_selector.cpp
+    ${ALGO_DIR}/buff_tracker.cpp
+    ${ALGO_DIR}/kalman_filter.cpp
+    ${ALGO_DIR}/ransac_filter.cpp
+    ${ALGO_DIR}/buff_pnp_solver.cpp
+    ${ALGO_DIR}/tracker_status.cpp
 )
 
 if(NNDEPLOYMENT_WITH_OPENVINO)
@@ -56,12 +73,9 @@ add_executable(main ${SOURCE_FILES})
 target_include_directories(main PRIVATE ${INCLUDE_DIRS})
 
 target_link_libraries(main PRIVATE
-    opencv_core
-    opencv_imgproc
-    opencv_videoio
-    opencv_highgui
-    opencv_dnn
+    ${OpenCV_LIBS}
     Threads::Threads
+    Eigen3::Eigen
 )
 
 if(NNDEPLOYMENT_WITH_OPENVINO)
