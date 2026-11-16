@@ -102,7 +102,7 @@ int main(int argc, char **argv)
     };
 
     //tracker更新
-    const double timestamp = clip.video.get(cv::CAP_PROP_POS_MSEC) / 1000.0;
+    const double timestamp = clip.video.get(cv::CAP_PROP_POS_MSEC) / 1000.0; //毫秒要转成秒
     tracker.update(timestamp); //时间戳，需改为同济形式
 
     buff_algo::BuffState state = tracker.get_state(); //拟合结果
@@ -119,5 +119,12 @@ int main(int argc, char **argv)
     ++processed;
 
     };
+    buff_algo::BuffState state1 = tracker.get_state(); //拟合结果
+
+    std::cout<<state1.a<<std::endl;
+    std::cout<<state1.w<<std::endl;
+    std::cout<<state1.b<<std::endl;
+    std::cout<<state1.phi<<std::endl;
+
     return 0;
 }

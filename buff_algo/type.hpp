@@ -73,8 +73,8 @@ enum class BuffColor : int {
 // 能量机关扇叶激活状态。
 enum class BuffActivation : int {
     NONE = -1,
-    INACTIVATE = 1,
-    ACTIVATE = 0,
+    INACTIVATE = 0,
+    ACTIVATE = 1,
 };
 
 namespace consts {
